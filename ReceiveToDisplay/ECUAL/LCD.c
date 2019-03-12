@@ -15,6 +15,8 @@
 #include "../Includes/LCD_cfg.h"
 
 
+static volatile uint8 SectionState = 1;
+
 static void LCD_initSection1(void);
 static void LCD_initSection2(void);
 static void LCD_initSection3(void);
@@ -40,34 +42,29 @@ static void LCD_initSection6(void);
 *
 ************************************************************************/
 void LCD_initTask (void){
-    static uint8 SectionState = 1;
     if(LCD_INT_COMPLETE != SectionState)
     {
         switch(SectionState)
         {
         case Section_1_e :  LCD_initSection1();
-                            SectionState++;
                             break;
         case Section_2_e :  LCD_initSection2();
-                            SectionState++;
                             break;
         case Section_3_e :  LCD_initSection3();
-                            SectionState++;
                             break;
         case Section_4_e :  LCD_initSection4();
-                            SectionState++;
                             break;
         case Section_5_e :  LCD_initSection5();
-                            SectionState++;
                             break;
         case Section_6_e : LCD_initSection6();
-                            SectionState=LCD_INT_COMPLETE;
                             break;
         default:break;
         }
     }
 
 }
+
+
 
 
 
@@ -95,48 +92,48 @@ void LCD_initTask (void){
 *               11- Disable LCD
 ************************************************************************/
 void LCD_sendCommand (uint8 LCD_Command){
+    uint8 SendCommandState = 1 ;
 
-    volatile uint32_t ui32Loop=0;
+    switch (SendCommandState)
+    {
+    case Section_1_e :  /* Clear RS Pin to Send Command */
+                        GPIOPinWrite(GPIO_PORTA_BASE, LCD_RS, LOW);
 
-    /* Clear RS Pin to Send Command */
-    GPIOPinWrite(GPIO_PORTA_BASE, LCD_RS, LOW);
+                        /* Clear RW Pin to Set Read Mode */
+                        GPIOPinWrite(GPIO_PORTA_BASE, LCD_RW, LOW);
 
-    /* Clear RW Pin to Set Read Mode */
-    GPIOPinWrite(GPIO_PORTA_BASE, LCD_RW, LOW);
+                        /* Put MSB Command On LCD Data Pins */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D4, ( LCD_Command & BitNum_4_e )); /* Command Bit (4) = LCD Data pin (4) */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D5, ( LCD_Command & BitNum_5_e )); /* Command Bit (5) = LCD Data pin (5) */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D6, ( LCD_Command & BitNum_6_e )); /* Command Bit (6) = LCD Data pin (6) */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D7, ( LCD_Command & BitNum_7_e )); /* Command Bit (7) = LCD Data pin (7) */
 
-    /* Put MSB Command On LCD Data Pins */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D4, ( LCD_Command & BitNum_4_e )); /* Command Bit (4) = LCD Data pin (4) */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D5, ( LCD_Command & BitNum_5_e )); /* Command Bit (5) = LCD Data pin (5) */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D6, ( LCD_Command & BitNum_6_e )); /* Command Bit (6) = LCD Data pin (6) */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D7, ( LCD_Command & BitNum_7_e )); /* Command Bit (7) = LCD Data pin (7) */
+                        GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LCD_E); /* Enable LCD To Latch Command */
+                        SendCommandState++;
+                        break;
 
-    GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LCD_E); /* Enable LCD To Latch Command */
+    case Section_2_e :  GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
+                        /* Put LSB Command On LCD Data Pins */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D4, ( (LCD_Command<<FourBits_e) & BitNum_4_e )); /* Command Bit (4) = LCD Data pin (4) */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D5, ( (LCD_Command<<FourBits_e) & BitNum_5_e )); /* Command Bit (5) = LCD Data pin (5) */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D6, ( (LCD_Command<<FourBits_e) & BitNum_6_e )); /* Command Bit (6) = LCD Data pin (6) */
+                        GPIOPinWrite(GPIO_PORTC_BASE, LCD_D7, ( (LCD_Command<<FourBits_e) & BitNum_7_e )); /* Command Bit (7) = LCD Data pin (7) */
 
-    /* Dummy Delay */
-    SysCtlDelay(2000);
+                        GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LCD_E); /* Enable LCD To Latch Command */
+                        SendCommandState++;
+                        break;
 
-    GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
+    case Section_3_e :  GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
+                        SendCommandStat = 1;
+                        break;
+    default:break;
+    }
 
-    /* Put LSB Command On LCD Data Pins */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D4, ( (LCD_Command<<FourBits_e) & BitNum_4_e )); /* Command Bit (4) = LCD Data pin (4) */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D5, ( (LCD_Command<<FourBits_e) & BitNum_5_e )); /* Command Bit (5) = LCD Data pin (5) */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D6, ( (LCD_Command<<FourBits_e) & BitNum_6_e )); /* Command Bit (6) = LCD Data pin (6) */
-    GPIOPinWrite(GPIO_PORTC_BASE, LCD_D7, ( (LCD_Command<<FourBits_e) & BitNum_7_e )); /* Command Bit (7) = LCD Data pin (7) */
-
-
-
-    GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LCD_E); /* Enable LCD To Latch Command */
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
-    GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
 
 
 }
+
+
 
 
 /************************************************************************
@@ -162,10 +159,34 @@ void LCD_sendCommand (uint8 LCD_Command){
 *               12- Disable LCD
 *
 ************************************************************************/
-void LCD_displayChar (uint8 LCD_Char){
+void LCD_displayCharTask (uint8 LCD_Char){
 
-    volatile uint32_t ui32Loop;
+    static uint8 DisplaySectionState = 1 ;
+    if(1) /* external Flag */
+    {
+        switch(DisplaySectionState)
+        {
 
+        case Section_1_e : LCD_displayCharSection1();
+                           DisplaySectionState++;
+                           break;
+        case Section_2_e : LCD_displayCharSection2();
+                           DisplaySectionState++;
+                           break;
+        case Section_3_e : LCD_displayCharSection3();
+                           DisplaySectionState=1;
+                           break;
+        default:break;
+
+        }
+    }
+
+
+
+}
+
+void LCD_displayCharSection1 (uint8 LCD_Char)
+{
     GPIOPinWrite(GPIO_PORTA_BASE, LCD_RS, LCD_RS); /* Set RS Pin to Send Data */
 
     GPIOPinWrite(GPIO_PORTA_BASE, LCD_RW, LOW); /* Clear RW Pin to Set Read Mode */
@@ -178,9 +199,9 @@ void LCD_displayChar (uint8 LCD_Char){
 
     GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LCD_E); /* Enable LCD To Latch Command */
 
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
+}
+void LCD_displayCharSection2 (uint8 LCD_Char)
+{
     GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
 
     /* Put LSB Char On LCD Data Pins */
@@ -191,13 +212,11 @@ void LCD_displayChar (uint8 LCD_Char){
 
     GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LCD_E); /* Enable LCD To Latch Command */
 
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
-    GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
-
 }
-
+void LCD_displayCharSection3 (uint8 LCD_Char)
+{
+    GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
+}
 
 static void LCD_initSection1(void)
 {
@@ -227,6 +246,7 @@ static void LCD_initSection1(void)
     /* Set LCD To 4 Bit Mode */
     LCD_sendCommand(LCD_CMD_4_BitMode_e);
 
+    SectionState++;
 }
 
 static void LCD_initSection2(void)
@@ -234,6 +254,8 @@ static void LCD_initSection2(void)
 
     /* Set LCD To 4 Bit Mode */
     LCD_sendCommand(LCD_CMD_4_BitMode2_e);
+
+    SectionState++;
 }
 
 static void LCD_initSection3(void)
@@ -241,6 +263,8 @@ static void LCD_initSection3(void)
 
     /* Set LCD To 4 Bit Mode */
     LCD_sendCommand(LCD_CMD_4_BitMode3_e);
+
+    SectionState++;
 }
 
 static void LCD_initSection4(void)
@@ -248,6 +272,8 @@ static void LCD_initSection4(void)
 
     /* Set LCD To 4 Bit Mode */
     LCD_sendCommand(LCD_CMD_DisplayONCursorOff_e);
+
+    SectionState++;
 }
 
 static void LCD_initSection5(void)
@@ -255,6 +281,8 @@ static void LCD_initSection5(void)
 
     /* Set LCD To 4 Bit Mode */
     LCD_sendCommand(LCD_CMD_ReturnHome_e);
+
+    SectionState++;
 }
 
 static void LCD_initSection6(void)
@@ -262,6 +290,8 @@ static void LCD_initSection6(void)
 
     /* Set LCD To 4 Bit Mode */
     LCD_sendCommand(LCD_CMD_Cursor_Beginning_1st_line_e);
+
+    SectionState=LCD_INT_COMPLETE;
 }
 
 
