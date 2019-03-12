@@ -14,6 +14,13 @@
 #include "../Includes/LCD.h"
 #include "../Includes/LCD_cfg.h"
 
+
+static void LCD_initSection1(void);
+static void LCD_initSection2(void);
+static void LCD_initSection3(void);
+static void LCD_initSection4(void);
+static void LCD_initSection5(void);
+static void LCD_initSection6(void);
 /************************************************************************
 * Function Name : LCD_init
 *
@@ -32,69 +39,36 @@
 *               5- Let Cursor Begin From 1st Line
 *
 ************************************************************************/
-void LCD_init (void){
-
-    volatile uint32_t ui32Loop=0;
-
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA); /* Enable the GPIOA port that is used for the on-board LCD. */
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC); /* Enable the GPIOC port that is used for the on-board LCD. */
-
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOA))
+void LCD_initTask (void){
+    static uint8 SectionState = 1;
+    if(LCD_INT_COMPLETE != SectionState)
     {
+        switch(SectionState)
+        {
+        case Section_1_e :  LCD_initSection1();
+                            SectionState++;
+                            break;
+        case Section_2_e :  LCD_initSection2();
+                            SectionState++;
+                            break;
+        case Section_3_e :  LCD_initSection3();
+                            SectionState++;
+                            break;
+        case Section_4_e :  LCD_initSection4();
+                            SectionState++;
+                            break;
+        case Section_5_e :  LCD_initSection5();
+                            SectionState++;
+                            break;
+        case Section_6_e : LCD_initSection6();
+                            SectionState=LCD_INT_COMPLETE;
+                            break;
+        default:break;
+        }
     }
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC))
-    {
-    }
-    /* Set pin RS to Output*/
-    /* Set pin R/W to Output*/
-    /* Set pin E to Output*/
-    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, LCD_RS | LCD_RW | LCD_E);
-
-
-    /* Set pin D4 to Output*/
-    /* Set pin D5 to Output*/
-    /* Set pin D6 to Output*/
-    /* Set pin D7 to Output*/
-    GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, LCD_D4 | LCD_D5 | LCD_D6 | LCD_D7);
-
-
-    /* Set LCD To 4 Bit Mode */
-    LCD_sendCommand(LCD_CMD_4_BitMode_e);
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
-    /* Set LCD To 4 Bit Mode */
-    LCD_sendCommand(LCD_CMD_4_BitMode2_e);
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
-    /* Set LCD To 4 Bit Mode */
-    LCD_sendCommand(LCD_CMD_4_BitMode3_e);
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
-    /* Set LCD To 4 Bit Mode */
-    LCD_sendCommand(LCD_CMD_DisplayONCursorOff_e);
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
-    /* Set LCD To 4 Bit Mode */
-    LCD_sendCommand(LCD_CMD_ReturnHome_e);
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
-
-    /* Set LCD To 4 Bit Mode */
-    LCD_sendCommand(LCD_CMD_Cursor_Beginning_1st_line_e);
-
-    /* Dummy Delay */
-    SysCtlDelay(2000);
 
 }
+
 
 
 /************************************************************************
@@ -223,6 +197,73 @@ void LCD_displayChar (uint8 LCD_Char){
     GPIOPinWrite(GPIO_PORTA_BASE, LCD_E, LOW);  /* Disable LCD */
 
 }
+
+
+static void LCD_initSection1(void)
+{
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA); /* Enable the GPIOA port that is used for the on-board LCD. */
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC); /* Enable the GPIOC port that is used for the on-board LCD. */
+
+    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOA))
+    {
+    }
+    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC))
+    {
+    }
+    /* Set pin RS to Output*/
+    /* Set pin R/W to Output*/
+    /* Set pin E to Output*/
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, LCD_RS | LCD_RW | LCD_E);
+
+
+    /* Set pin D4 to Output*/
+    /* Set pin D5 to Output*/
+    /* Set pin D6 to Output*/
+    /* Set pin D7 to Output*/
+    GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, LCD_D4 | LCD_D5 | LCD_D6 | LCD_D7);
+
+
+    /* Set LCD To 4 Bit Mode */
+    LCD_sendCommand(LCD_CMD_4_BitMode_e);
+
+}
+
+static void LCD_initSection2(void)
+{
+
+    /* Set LCD To 4 Bit Mode */
+    LCD_sendCommand(LCD_CMD_4_BitMode2_e);
+}
+
+static void LCD_initSection3(void)
+{
+
+    /* Set LCD To 4 Bit Mode */
+    LCD_sendCommand(LCD_CMD_4_BitMode3_e);
+}
+
+static void LCD_initSection4(void)
+{
+
+    /* Set LCD To 4 Bit Mode */
+    LCD_sendCommand(LCD_CMD_DisplayONCursorOff_e);
+}
+
+static void LCD_initSection5(void)
+{
+
+    /* Set LCD To 4 Bit Mode */
+    LCD_sendCommand(LCD_CMD_ReturnHome_e);
+}
+
+static void LCD_initSection6(void)
+{
+
+    /* Set LCD To 4 Bit Mode */
+    LCD_sendCommand(LCD_CMD_Cursor_Beginning_1st_line_e);
+}
+
 
 
 

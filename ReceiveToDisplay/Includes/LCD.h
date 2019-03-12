@@ -81,12 +81,25 @@ enum BitNumbers{
 
     };
 
+enum SectionNumber{
+
+    Section_1_e = 1U,
+    Section_2_e = 2U,
+    Section_3_e = 3U,
+    Section_4_e = 4U,
+    Section_5_e = 5U,
+    Section_6_e = 6U,
+    Section_7_e = 7U,
+
+    };
+
 #define FIRST_BIT   1U
 
 #define LINE_TWO    2U
 
-#define LOW         0U
-#define ONE         1U
+#define LOW                 0U
+#define ONE                 1U
+#define LCD_INT_COMPLETE    0U
 
 /************************************************************************
 * Function Name : LCD_init
@@ -106,7 +119,7 @@ enum BitNumbers{
 *               5- Let Cursor Begin From 1st Line
 *
 ************************************************************************/
-extern void LCD_init (void);
+extern void LCD_initTask (void);
 
 
 /************************************************************************
