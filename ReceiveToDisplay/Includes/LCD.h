@@ -99,6 +99,8 @@ enum SectionNumber{
 
 #define LOW                 0U
 #define ONE                 1U
+#define ZERO                0U
+#define TWO                 2U
 #define LCD_INT_COMPLETE    0U
 
 /************************************************************************
@@ -145,7 +147,7 @@ extern void LCD_initTask (void);
 *               10- Delay 2 ms
 *               11- Disable LCD
 ************************************************************************/
-extern void LCD_sendCommand (uint8 LCD_Command);
+extern void LCD_sendCommandTask (uint8 LCD_Command);
 
 
 
@@ -172,7 +174,7 @@ extern void LCD_sendCommand (uint8 LCD_Command);
 *               12- Disable LCD
 *
 ************************************************************************/
-extern void LCD_displayChar (uint8 LCD_Char);
+extern void LCD_displayCharTask (uint8 LCD_Char);
 
 
 
@@ -245,5 +247,5 @@ extern void LCD_clear (void);
 *
 ************************************************************************/
 extern void LCD_gotoRowColumn (uint8 LCD_Line , uint8 LCD_DigitPosition);
-
+void LCD_displayChar (uint8 LCD_Char);
 #endif
